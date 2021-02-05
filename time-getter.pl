@@ -5,6 +5,7 @@ use strict;
 open (F, 'git ls-tree -r HEAD|');
 
 my %list;
+my %all_file;
 
 # 辞書作る
 while (<F>) {
@@ -14,6 +15,7 @@ while (<F>) {
     my $hash     = $info[-2];
 
     $list{$filename} = $hash;
+    $all_file{$filename} = 1;
 }
 
 close(F);
@@ -46,10 +48,15 @@ while (<COMMITS>) {
 
     open (BLOBS, "git ls-tree -r $tree |");
 
+    my %remained = %all_file;
     while (<BLOBS>) {
         my @tmp = split(/\s+/);
         my $filename = $tmp[-1];
         my $blobhash = $tmp[-2];
+
+        if ($remained{$filename}) {
+            delete $remained{$filename};
+        }
 
         if (!$list{$filename}) {
             next;
@@ -58,7 +65,14 @@ while (<COMMITS>) {
         if ($list{$filename} !~ /$blobhash/) {
             print $filename . ": " . $prevtimestamp . " \n";
             delete ($list{$filename});
+            delete ($all_file{$filename});
         }
+    }
+
+    foreach my $filename (keys(%remained)) {
+        print $filename . ": " . $prevtimestamp . " \n";
+        delete ($list{$filename});
+        delete ($all_file{$filename});
     }
 
     $prevtimestamp = $timestamp;
