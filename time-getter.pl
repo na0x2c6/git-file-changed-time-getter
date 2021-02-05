@@ -20,6 +20,8 @@ while (<F>) {
 
 close(F);
 
+$? and die;
+
 open (COMMITS, 'git rev-list HEAD |');
 
 # timestamp 取りつつ tree を get
