@@ -79,6 +79,12 @@ while (<COMMITS>) {
     close (BLOBS);
 }
 
+# For files that never changed from the root commit.
+foreach my $filename (keys(%all_file)) {
+    do_print($filename, $prevtimestamp);
+}
+
+
 sub do_print() {
     my ($filename, $timestamp) = @_;
     print $filename . "\t" . $timestamp . " \n";
