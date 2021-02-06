@@ -65,14 +65,14 @@ while (<COMMITS>) {
         }
 
         if ($list{$filename} !~ /$blobhash/) {
-            print $filename . ": " . $prevtimestamp . " \n";
+            print $filename . "\t" . $prevtimestamp . " \n";
             delete ($list{$filename});
             delete ($all_file{$filename});
         }
     }
 
     foreach my $filename (keys(%remained)) {
-        print $filename . ": " . $prevtimestamp . " \n";
+        print $filename . "\t" . $prevtimestamp . " \n";
         delete ($list{$filename});
         delete ($all_file{$filename});
     }
