@@ -1,5 +1,5 @@
 ## About
-A Perl script that wrapped some git command to get the updated-times (committed-times) from HEAD's tree for [git](https://git-scm.com/).
+A Perl script, that wrapped some _git_ command to get the updated-timestamps (committed-timestamps) from HEAD's tree for [git](https://git-scm.com/).
 
 ## How to use
 
