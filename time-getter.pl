@@ -64,22 +64,26 @@ while (<COMMITS>) {
             next;
         }
 
+
         if ($list{$filename} !~ /$blobhash/) {
-            print $filename . "\t" . $prevtimestamp . " \n";
-            delete ($list{$filename});
-            delete ($all_file{$filename});
+            do_print($filename, $prevtimestamp);
         }
     }
 
     foreach my $filename (keys(%remained)) {
-        print $filename . "\t" . $prevtimestamp . " \n";
-        delete ($list{$filename});
-        delete ($all_file{$filename});
+        do_print($filename, $prevtimestamp);
     }
 
     $prevtimestamp = $timestamp;
 
     close (BLOBS);
+}
+
+sub do_print() {
+    my ($filename, $timestamp) = @_;
+    print $filename . "\t" . $timestamp . " \n";
+    delete ($list{$filename});
+    delete ($all_file{$filename});
 }
 
 close (COMMITS);
