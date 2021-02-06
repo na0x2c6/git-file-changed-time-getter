@@ -2,39 +2,38 @@
 
 use strict;
 
-open (F, 'git ls-tree -r HEAD|');
+open (TREES, 'git ls-tree -r HEAD|');
 
-my %list;
-my %all_file;
+my %blob_hash;
+my %files_should_print;
 
-# 辞書作る
-while (<F>) {
+# make the HEAD tree info
+while (<TREES>) {
     my @info = split /\s+/;
 
     my $filename = $info[-1];
     my $hash     = $info[-2];
 
-    $list{$filename} = $hash;
-    $all_file{$filename} = 1;
+    $blob_hash{$filename} = $hash;
+    $files_should_print{$filename} = 1;
 }
 
-close(F);
+close(TREES);
 
 $? and die;
 
 open (COMMITS, 'git rev-list HEAD |');
 
-# timestamp 取りつつ tree を get
-my $prevtimestamp;
-my $timestamp;
+my $prev_timestamp;
 while (<COMMITS>) {
+    (keys %files_should_print) or last;
+
     my $commit = $_;
 
-    (keys %list) or last;
-
-    open (TMP, 'git cat-file -p ' . $commit . '|');
+    open (COMMIT_CONTENT, 'git cat-file -p ' . $commit . '|');
     my $tree;
-    while (<TMP>) {
+    my $timestamp;
+    while (<COMMIT_CONTENT>) {
         if (/tree/) {
             my @tmp = split /\s+/;
             $tree = $tmp[1];
@@ -46,11 +45,11 @@ while (<COMMITS>) {
             last;
         }
     }
-    close(TMP);
+    close(COMMIT_CONTENT);
 
     open (BLOBS, "git ls-tree -r $tree |");
 
-    my %remained = %all_file;
+    my %remained = %files_should_print;
     while (<BLOBS>) {
         my @tmp = split(/\s+/);
         my $filename = $tmp[-1];
@@ -60,36 +59,35 @@ while (<COMMITS>) {
             delete $remained{$filename};
         }
 
-        if (!$list{$filename}) {
+        if (!$files_should_print{$filename}) {
             next;
         }
 
 
-        if ($list{$filename} !~ /$blobhash/) {
-            do_print($filename, $prevtimestamp);
+        if ($blob_hash{$filename} !~ /$blobhash/) {
+            do_print($filename, $prev_timestamp);
         }
     }
 
     foreach my $filename (keys(%remained)) {
-        do_print($filename, $prevtimestamp);
+        do_print($filename, $prev_timestamp);
     }
 
-    $prevtimestamp = $timestamp;
+    $prev_timestamp = $timestamp;
 
     close (BLOBS);
 }
 
 # For files that never changed from the root commit.
-foreach my $filename (keys(%all_file)) {
-    do_print($filename, $prevtimestamp);
+foreach my $filename (keys(%files_should_print)) {
+    do_print($filename, $prev_timestamp);
 }
 
 
 sub do_print() {
     my ($filename, $timestamp) = @_;
     print $filename . "\t" . $timestamp . " \n";
-    delete ($list{$filename});
-    delete ($all_file{$filename});
+    delete ($files_should_print{$filename});
 }
 
 close (COMMITS);
